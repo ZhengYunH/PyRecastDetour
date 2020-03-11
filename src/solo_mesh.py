@@ -39,9 +39,9 @@ class SoloMesh(BaseObject):
 
     def rasterize_triangles(self):
         self.geom.mark_walkable_triangles(self.config.walkable_slope_angle) # 一定角度的三角面才是walkable的
-        self.height_field = HeightField(owner=self)
+        self.height_field = HeightField(config=self.config)
         for tri in self.geom.get_tris():
-            self.height_field.rasterize_triangle(tri)
+            self.height_field.add_triangle(triangle=tri)
 
     def filter_walkable_surfaces(self):
         pass

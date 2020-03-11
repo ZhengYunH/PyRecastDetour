@@ -1,4 +1,8 @@
 class Vector3(object):
+    class AXIS(object):
+        X = 0
+        Y = 1
+        Z = 2
     def __init__(self, raw_data=None, data_type=None):
         self.inited = False
         if not raw_data: # 留个placeHolder，到时候set的时候再初始化
@@ -24,4 +28,36 @@ class Vector3(object):
 
     def __setitem__(self, key, value):
         self.data[key % 3] = value
+
+    @staticmethod
+    def compare(op, restrict, *args):
+        OP_FUNC_DICT = {
+            'min': lambda x, y: x < y,
+            'max': lambda x, y: x > y,
+        }
+
+        data = []
+        for index in range(args[0]):
+            cur = args[0][index]
+            for v in args[1:]:
+                if OP_FUNC_DICT[op](v[index], cur):
+                    cur = v[index]
+            data.append(cur)
+        return data
+
+    @staticmethod
+    def min(*args, **kwargs): # TODO: 加一下restrict
+        return Vector3.compare('min', None, *args)
+
+    @staticmethod
+    def max(*args, **kwargs):
+        return Vector3.compare('max', None, *args)
+
+    def equal(self, v):
+        if not isinstance(v, Vector3):
+            return False
+        for index, num in enumerate(self.data):
+            if num != v[index] :
+                return False
+        return True
 
