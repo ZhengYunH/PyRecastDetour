@@ -65,7 +65,7 @@ class HeightField(BaseObject):
                 if hf_ymax <= hf_ymin:
                     hf_ymax = hf_ymin + 1
                 
-                self.add_span(hf_x, hf_z, hf_ymin, hf_ymax)
+                self.add_span(hf_x, hf_z, hf_ymin, hf_ymax, triangle.area)
 
     def real_value_to_grid(self, real_value, axis: Vector3.AXIS):
         if axis == Vector3.AXIS.X:

@@ -10,19 +10,17 @@ class Geom(object):
         self.verts = verts
         self.tris_index = tris_index
         self.tris = []
-        self.areas = []
 
     def init(self):
         self.tris.clear()
-        self.areas.clear()
         for v_index in self.tris_index:
-            self.tris.append(Triangle([
+            tri = Triangle([
                 self.verts[v_index[0]],
                 self.verts[v_index[1]],
                 self.verts[v_index[2]]
-            ]))
-        self.areas = [Geom.AREA_TYPE.NULL] * len(self.tris)
-
+            ])
+            tri.set_data(Geom.AREA_TYPE.NULL)
+            self.tris.append(tri)
 
     def get_tris(self):
         return self.tris
@@ -35,4 +33,5 @@ class Geom(object):
         walkable_threshold = math.cos(walkable_slope_angle / 180.0 * math.pi)
         for index, tri in enumerate(self.get_tris()):
             if tri.get_normal()[1] > walkable_threshold:
-                self.areas[index] = Geom.AREA_TYPE.WALKABLE
+                tri.set_area(Geom.AREA_TYPE.WALKABLE)
+
