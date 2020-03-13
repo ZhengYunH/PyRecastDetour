@@ -5,3 +5,4 @@ class Vector2(object):
     def __getitem__(self, item: int):
         return self.data[item % 2]
 
+

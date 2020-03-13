@@ -20,7 +20,11 @@ class Triangle(Vector3):
         return self.data
 
     def get_normal(self):
-        return Vector3()
+        v0, v1, v2 = self.data
+        e0 = v1.sub(v0)
+        e1 = v2.sub(v0)
+        norm = e0.cross(e1).normalize()
+        return norm
 
     def get_bbox(self):
         bbox_min = Vector3.min(*self.data)

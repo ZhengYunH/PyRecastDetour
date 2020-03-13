@@ -1,3 +1,6 @@
+import math
+
+
 class Vector3(object):
     class AXIS(object):
         X = 0
@@ -50,6 +53,22 @@ class Vector3(object):
         for d in self.data:
             data.append(d * factor)
         return Vector3(data)
+
+    def cross(self, v):
+        x = self[1] * v[2] - self[2] * v[1]
+        y = self[2] * v[0] - self[0] * v[2]
+        z = self[0] * v[1] - self[1] * v[0]
+        return Vector3([x, y, z])
+
+    def abs(self):
+        return math.sqrt(self[0] * self[0] + self[1] * self[1] + self[2] * self[2])
+
+    def normalize(self):
+        abs_value = self.abs()
+        data = []
+        for d in self.data:
+            data.append(d / abs_value)
+        return data
 
     @staticmethod
     def compare(op, restrict, *args):
