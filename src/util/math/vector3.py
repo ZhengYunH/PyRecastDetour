@@ -3,6 +3,7 @@ class Vector3(object):
         X = 0
         Y = 1
         Z = 2
+
     def __init__(self, raw_data=None, data_type=None):
         self.inited = False
         if not raw_data: # 留个placeHolder，到时候set的时候再初始化
@@ -28,6 +29,27 @@ class Vector3(object):
 
     def __setitem__(self, key, value):
         self.data[key % 3] = value
+
+    def get_axis_value(self, axis):
+        return self.data[axis % 3]
+
+    def add(self, v):
+        data = []
+        for i, d in enumerate(self.data):
+            data.append(d + v[i])
+        return Vector3(data)
+
+    def sub(self, v):
+        data = []
+        for i, d in enumerate(self.data):
+            data.append(d - v[i])
+        return Vector3(data)
+
+    def mul(self, factor):
+        data = []
+        for d in self.data:
+            data.append(d * factor)
+        return Vector3(data)
 
     @staticmethod
     def compare(op, restrict, *args):

@@ -5,13 +5,21 @@ from util.math.vector3 import Vector3
 from util.math import math_common
 
 
+class Span(BaseObject):
+    def __init__(self, smin, smax, area):
+        self.smin = smin
+        self.smax = smax
+        self.area = area
+
+
 class HeightField(BaseObject):
     def __init__(self, config):
-        self.grid = Grid(depth=config.depth, width=config.width, data_type=int)
+        self.grid = Grid(depth=config.depth, width=config.width, data_type=list)
         self.bmin = config.bmin
         self.bmax = config.bmax
         self.cell_size = config.cell_size
         self.cell_height = config.cell_height
+        self.flag_merge_threshold = config.flag_merge_threshold
 
     def add_triangle(self, triangle: Triangle):
         height_field_bbox = [self.bmin, self.bmax]
@@ -21,7 +29,7 @@ class HeightField(BaseObject):
         if not math_common.overlap_bounds(height_field_bbox, triangle_bbox):
             return
 
-        # 将三角形转换到height field的grid中
+        # 将三角形转换到height field的grid空间中
         triangle_bbox_min, triangle_bbox_max = triangle_bbox
         hf_zmin = self.real_value_to_grid(triangle_bbox_min.z, axis=Vector3.AXIS.Z)
         hf_zmax = self.real_value_to_grid(triangle_bbox_max.z,  axis=Vector3.AXIS.Z)
@@ -30,8 +38,8 @@ class HeightField(BaseObject):
 
         for hf_z in range(hf_zmin, hf_zmax):
             # 切割多边形。保存剩下的多边形在remain中，下次循环使用
-            real_cell_z =  self.grid_to_real_value(hf_z, axis=Vector3.AXIS.Z)
-            inrow = self.divide_poly(remain, real_cell_z, Vector3.AXIS.Z)
+            real_cell_z = self.grid_to_real_value(hf_z, axis=Vector3.AXIS.Z)
+            inrow, remain = self.divide_poly(remain, real_cell_z, Vector3.AXIS.Z)
             if len(inrow) < 3:
                 continue
 
@@ -43,7 +51,7 @@ class HeightField(BaseObject):
 
             for hf_x in range(hf_xmin, hf_xmax):
                 real_cell_x = self.grid_to_real_value(hf_x, axis=Vector3.AXIS.X)
-                p1 = self.divide_poly(inrow, real_cell_x, Vector3.AXIS.X)
+                p1, _ = self.divide_poly(inrow, real_cell_x, Vector3.AXIS.X)
                 if len(p1) < 3:
                     continue
 
@@ -58,10 +66,6 @@ class HeightField(BaseObject):
                     hf_ymax = hf_ymin + 1
                 
                 self.add_span(hf_x, hf_z, hf_ymin, hf_ymax)
-
-
-
-        # TODO
 
     def real_value_to_grid(self, real_value, axis: Vector3.AXIS):
         if axis == Vector3.AXIS.X:
@@ -81,11 +85,73 @@ class HeightField(BaseObject):
         return base + grid_value * multiplier
 
     def divide_poly(self, be_divided, dividing_value, axis: Vector3.AXIS):
-        inrow = []
-        return inrow
+        """切割多边形，返回切出去的部分和剩余部分；切割线由value和axis决定（切割线只能平行于坐标轴）
 
-    def add_span(self, hf_x, hf_z, hf_ymin, hf_ymax):
-        pass
+        :param be_divided: 待切割的多边形
+        :param dividing_value: 切割线值
+        :param axis: 切割线平行轴
+        :return: inrow, remain -> 切出去的部分和剩余部分
+        """
+        inrow = []
+        remain = []
+
+        # 计算所有的点到分割线的距离
+        distances = []
+        for point in be_divided:
+            distances.append(dividing_value - point.get_axis_value(axis))
+
+        for index in range(len(be_divided)):
+            cur_point = be_divided[index]
+            prev_point = be_divided[index-1]
+            ina = distances[index] >= 0
+            inb = distances[index-1] >= 0
+
+            if ina != inb:
+                factor = distances[index] / distances[index] - distances[index-1]
+                point_on_dividing_line = prev_point.add(cur_point.sub(prev_point).mul(factor))
+                inrow.append(point_on_dividing_line)
+                if distances[index] > 0:
+                    remain.append(cur_point)
+                else:
+                    inrow.append(cur_point)
+            else:
+                if distances[index] >= 0:
+                    remain.append(cur_point)
+                    if distances[index] != 0:
+                        continue
+                inrow.append(cur_point)
+        return inrow, remain
+
+    def add_span(self, hf_x, hf_z, hf_ymin, hf_ymax, area):
+        spans_column = self.grid[hf_z][hf_x]
+        span_handle = Span(hf_ymin, hf_ymax, area)
+        insert_index = -1
+        inserted = False
+        for index, cur_span in enumerate(spans_column):
+            if cur_span.smin > span_handle.smax:
+                if not inserted:  # 还没有被合并，需要加到列表中
+                    insert_index = index
+                    inserted = True
+                break
+            elif cur_span.smax < span_handle.smin:
+                continue
+            else:   # overlap
+                # merge span
+                span_handle.smin = min(span_handle.smin, cur_span.smin)
+                span_handle.smax = max(span_handle.smax, cur_span.smax)
+                if span_handle.smax - cur_span.smax < self.flag_merge_threshold:
+                    span_handle.area = cur_span.area
+                inserted = True
+        if inserted:
+            if insert_index >= 0:
+                self.grid[hf_z][hf_x] = spans_column.insert(insert_index, span_handle)
+        else:
+            self.grid[hf_z][hf_x].append(span_handle)
+
+
+
+
+
 
 
 

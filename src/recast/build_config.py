@@ -15,6 +15,8 @@ class BuildConfig(object):
         self.walkable_slope_angle = 70
         self.walkable_height = 0
 
+        self.flag_merge_threshold = 1
+
     def init(self):
         self.calc_grid_size()
 
