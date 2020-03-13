@@ -148,13 +148,3 @@ class HeightField(BaseObject):
         else:
             self.grid[hf_z][hf_x].append(span_handle)
 
-
-
-
-
-
-
-
-
-
-
